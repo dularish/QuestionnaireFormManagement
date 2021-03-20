@@ -48,7 +48,7 @@ namespace FormsWeb.Server
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, IConfiguration configuration)
         {
             if (env.IsDevelopment())
             {
@@ -79,6 +79,8 @@ namespace FormsWeb.Server
                 endpoints.MapControllers();
                 endpoints.MapFallbackToFile("index.html");
             });
+
+            AuthDBContextInitializer.Seed(userManager, roleManager, configuration).Wait();
         }
     }
 }
