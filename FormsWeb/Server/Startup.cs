@@ -28,7 +28,7 @@ namespace FormsWeb.Server
         {
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(
-                    Configuration.GetConnectionString("DefaultConnection")));
+                    Configuration.GetConnectionString("AuthConnection")));
 
             services.AddDatabaseDeveloperPageExceptionFilter();
 
