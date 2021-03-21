@@ -13,7 +13,6 @@ namespace FormsWeb.Server.Data
         public const string UserRoleName = "User";
 
         public const string DefaultAdminEmailId = "admin@gmail.com";
-        public const string DefaultAdminUserName = "admin";
         public async static Task Seed(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, IConfiguration configuration)
         {
             foreach (var role in new List<string> { SuperAdminRoleName, AdminRoleName, UserRoleName })
@@ -22,14 +21,14 @@ namespace FormsWeb.Server.Data
             }
 
             string superAdminPassword = configuration.GetValue<string>("SuperAdminPassword");
-            await CreateUser(userManager, DefaultAdminEmailId, DefaultAdminUserName, superAdminPassword, new List<string>() { SuperAdminRoleName, AdminRoleName, UserRoleName });
+            await CreateUser(userManager, DefaultAdminEmailId, superAdminPassword, new List<string>() { SuperAdminRoleName, AdminRoleName, UserRoleName });
         }
 
-        private async static Task CreateUser(UserManager<ApplicationUser> userManager, string defaultAdminEmailId, string defaultAdminUserName, string password, List<string> roles)
+        private async static Task CreateUser(UserManager<ApplicationUser> userManager, string defaultAdminEmailId, string password, List<string> roles)
         {
             if (await userManager.FindByEmailAsync(DefaultAdminEmailId) == null)
             {
-                ApplicationUser user = new ApplicationUser() { Email = defaultAdminEmailId, EmailConfirmed = true, UserName = defaultAdminUserName };
+                ApplicationUser user = new ApplicationUser() { Email = defaultAdminEmailId, EmailConfirmed = true, UserName = defaultAdminEmailId };
                 var userCreationResult = await userManager.CreateAsync(user, password);
 
                 if (userCreationResult.Succeeded)
