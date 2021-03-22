@@ -1,4 +1,5 @@
 ﻿using FormsWeb.Server.Models;
+using FormsWeb.Shared;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using System.Collections.Generic;
@@ -8,20 +9,17 @@ namespace FormsWeb.Server.Data
 {
     public static class AuthDBContextInitializer
     {
-        public const string SuperAdminRoleName = "SuperAdmin";
-        public const string AdminRoleName = "Administrator";
-        public const string UserRoleName = "User";
-
         public const string DefaultAdminEmailId = "admin@gmail.com";
         public async static Task Seed(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, IConfiguration configuration)
         {
-            foreach (var role in new List<string> { SuperAdminRoleName, AdminRoleName, UserRoleName })
+            List<string> allRoles = new List<string> { Roles.SuperAdmin.ToString(), Roles.Administrator.ToString(), Roles.User.ToString(), Roles.Developer.ToString() };
+            foreach (var role in allRoles)
             {
                 await CreateRole(roleManager, role);
             }
 
             string superAdminPassword = configuration.GetValue<string>("SuperAdminPassword");
-            await CreateUser(userManager, DefaultAdminEmailId, superAdminPassword, new List<string>() { SuperAdminRoleName, AdminRoleName, UserRoleName });
+            await CreateUser(userManager, DefaultAdminEmailId, superAdminPassword, allRoles);
         }
 
         private async static Task CreateUser(UserManager<ApplicationUser> userManager, string defaultAdminEmailId, string password, List<string> roles)
