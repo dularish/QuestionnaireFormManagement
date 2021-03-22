@@ -1,0 +1,11 @@
+﻿@page "/manageusers"
+
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@attribute [Authorize(Roles = "SuperAdmin")]
+
+<h3>ManageUsers</h3>
+
+@code {
+
+}

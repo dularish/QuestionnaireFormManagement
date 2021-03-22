@@ -24,7 +24,8 @@ namespace FormsWeb.Client
             // Supply HttpClient instances that include access tokens when making requests to the server project
             builder.Services.AddScoped(sp => sp.GetRequiredService<IHttpClientFactory>().CreateClient("FormsWeb.ServerAPI"));
 
-            builder.Services.AddApiAuthorization();
+            builder.Services.AddApiAuthorization()
+                .AddAccountClaimsPrincipalFactory<ArrayClaimsPrincipalFactory>();
 
             await builder.Build().RunAsync();
         }

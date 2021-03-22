@@ -1,0 +1,28 @@
+﻿@page "/claims"
+
+<AuthorizeView>
+    <Authorized>
+        <h2>Hello @context.User.Identity.Name, here's the list of your claims:</h2>
+        <ul>
+            @foreach (var claim in context.User.Claims)
+            {
+                <li><b>@claim.Type</b>: @claim.Value</li>
+            }
+        </ul>
+
+        <h3>Is in superadmin role : @context.User.IsInRole("SuperAdmin")</h3>
+        <h3>Is in SUPERADMIN role : @context.User.IsInRole("SUPERADMIN")</h3>
+        <h3>Is in ADMINISTRATOR role : @context.User.IsInRole("ADMINISTRATOR")</h3>
+        <h3>Is in Administrator role : @context.User.IsInRole("Administrator")</h3>
+        <h3>Is in USER role : @context.User.IsInRole("USER")</h3>
+        <h3>Is in user role : @context.User.IsInRole("user")</h3>
+        <h3>Is in User role : @context.User.IsInRole("User")</h3>
+        <h3>Is in ["SuperAdmin","User\","Administrator"] role : @context.User.IsInRole("[\"SuperAdmin\",\"User\",\"Administrator\"]")</h3>
+        <h3>Is in ["SuperAdmin","Administrator\","User"] role : @context.User.IsInRole("[\"SuperAdmin\",\"Administrator\",\"User\"]")</h3>
+        <h3></h3>
+
+    </Authorized>
+    <NotAuthorized>
+        <p>I'm sorry, I can't display any claims until you log in</p>
+    </NotAuthorized>
+</AuthorizeView>

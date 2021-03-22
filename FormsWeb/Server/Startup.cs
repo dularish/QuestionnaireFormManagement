@@ -1,15 +1,15 @@
 using FormsWeb.Server.Data;
 using FormsWeb.Server.Models;
+using IdentityServer4.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 
 namespace FormsWeb.Server
@@ -38,13 +38,19 @@ namespace FormsWeb.Server
                 .AddEntityFrameworkStores<AuthDbContext>();
 
             services.AddIdentityServer()
-                .AddApiAuthorization<ApplicationUser, AuthDbContext>();
-
+                .AddApiAuthorization<ApplicationUser, AuthDbContext>();/*options => 
+            {
+                options.IdentityResources["openid"].UserClaims.Add("role");
+                options.ApiResources.Single().UserClaims.Add("role");
+            });
+            JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Remove("role");*/ //Option 1 for getting role in claims
             services.AddAuthentication()
                 .AddIdentityServerJwt();
 
             services.AddControllersWithViews();
             services.AddRazorPages();
+
+            services.AddTransient<IProfileService, ProfileService>();//Option 2 for getting role in claims
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

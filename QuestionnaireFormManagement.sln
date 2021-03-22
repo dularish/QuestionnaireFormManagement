@@ -10,11 +10,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		CommandsRun.txt = CommandsRun.txt
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FormsWeb.Server", "FormsWeb\Server\FormsWeb.Server.csproj", "{5AB30C6A-548E-4D93-9549-9D083F3D8F3C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FormsWeb.Server", "FormsWeb\Server\FormsWeb.Server.csproj", "{5AB30C6A-548E-4D93-9549-9D083F3D8F3C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FormsWeb.Client", "FormsWeb\Client\FormsWeb.Client.csproj", "{BE633BDF-F96A-4368-9C6D-C63318AEEB2F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FormsWeb.Client", "FormsWeb\Client\FormsWeb.Client.csproj", "{BE633BDF-F96A-4368-9C6D-C63318AEEB2F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FormsWeb.Shared", "FormsWeb\Shared\FormsWeb.Shared.csproj", "{E6639819-246F-42D9-93D7-41C755B758B1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FormsWeb.Shared", "FormsWeb\Shared\FormsWeb.Shared.csproj", "{E6639819-246F-42D9-93D7-41C755B758B1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
