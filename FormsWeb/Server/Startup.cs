@@ -44,8 +44,8 @@ namespace FormsWeb.Server
             {
                 options.IdentityResources["openid"].UserClaims.Add("role");
                 options.ApiResources.Single().UserClaims.Add("role");
-            });
-            JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Remove("role");*/ //Option 1 for getting role in claims
+            });*///Option 1 for getting role in claims
+            JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Remove("role");//This modifies the type of role claim from microsoft schema to just role
             services.AddAuthentication()
                 .AddIdentityServerJwt();
 
