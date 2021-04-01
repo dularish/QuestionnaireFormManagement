@@ -2,10 +2,175 @@
 
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@using FormsWeb.Shared
 @attribute [Authorize(Roles = "SuperAdmin")]
+@inject HttpClient Http
 
 <h3>ManageUsers</h3>
 
+@if(users == null)
+{
+    <h3>Loading....</h3>
+}
+else
+{
+<table class="table">
+    <thead>
+        <tr>
+            <th>EmailId</th>
+            <th>IsAdmin</th>
+            <th>IsSuperAdmin</th>
+            <th>IsDeveloper</th>
+            <th>IsUser</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        @foreach (var user in users)
+        {
+        <tr>
+            <td>@user.EmailId</td>
+            <td><input type="checkbox" @bind="@user.IsAdmin" disabled="@(!user.IsInEditMode)" /></td>
+            <td><input type="checkbox" @bind="@user.IsSuperAdmin" disabled="@(!user.IsInEditMode)" /></td>
+            <td><input type="checkbox" @bind="@user.IsDeveloper" disabled="@(!user.IsInEditMode)" /></td>
+            <td><input type="checkbox" @bind="@user.IsUser" disabled="@(!user.IsInEditMode)" /></td>
+            <td>
+                @if (!user.IsInEditMode) 
+                { 
+                    <input type="button" value="Edit" @onclick="args => EditClicked(user, args)" />
+                }
+                else
+                {
+                    <input type="button" value="Update" @onclick="async args => await UpdateClicked(user, args)" />
+                }
+                <input type="button" value="Delete" @onclick="async args => await DeleteClicked(user, args)" />
+            </td>
+        </tr>
+        }
+
+    </tbody>
+</table>
+}
+
+
 @code {
+
+    private List<ApplicationUserUI> users;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var usersSharedType = await Http.GetFromJsonAsync<ApplicationUserShared[]>("Users");
+        users = usersSharedType.Select(s => new ApplicationUserUI(s)).ToList();
+    }
+
+    private void EditClicked(ApplicationUserUI user, MouseEventArgs args)
+    {
+        user.IsInEditMode = true;
+    }
+
+    private async Task UpdateClicked(ApplicationUserUI user, MouseEventArgs args)
+    {
+        await Http.PostAsJsonAsync<ApplicationUserShared>("Users", user);
+        user.IsInEditMode = false;
+    }
+
+    private async Task DeleteClicked(ApplicationUserUI user, MouseEventArgs args)
+    {
+        await Http.PostAsJsonAsync<ApplicationUserShared>("Users/DeleteUser", user);
+        users.Remove(user);
+    }
+
+
+    public class ApplicationUserUI : ApplicationUserShared
+    {
+        private bool _IsSuperAdmin;
+
+        public bool IsSuperAdmin
+        {
+            get => _IsSuperAdmin;
+            set
+            {
+                _IsSuperAdmin = value;
+                if (_IsSuperAdmin)
+                {
+                    Roles.Add(FormsWeb.Shared.Roles.SuperAdmin.ToString());
+                }
+                else
+                {
+                    Roles.Remove(FormsWeb.Shared.Roles.SuperAdmin.ToString());
+                }
+            }
+        }
+
+        private bool _IsAdmin;
+
+        public bool IsAdmin
+        {
+            get => _IsAdmin;
+            set
+            {
+                _IsAdmin = value;
+                if (_IsAdmin)
+                {
+                    Roles.Add(FormsWeb.Shared.Roles.Administrator.ToString());
+                }
+                else
+                {
+                    Roles.Remove(FormsWeb.Shared.Roles.Administrator.ToString());
+                }
+            }
+        }
+
+        private bool _IsUser;
+
+        public bool IsUser
+        {
+            get => _IsUser;
+            set
+            {
+                _IsUser = value;
+                if (_IsUser)
+                {
+                    Roles.Add(FormsWeb.Shared.Roles.User.ToString());
+                }
+                else
+                {
+                    Roles.Remove(FormsWeb.Shared.Roles.User.ToString());
+                }
+            }
+        }
+
+        private bool _IsDeveloper;
+
+        public bool IsDeveloper
+        {
+            get => _IsDeveloper;
+            set
+            {
+                _IsDeveloper = value;
+                if (_IsDeveloper)
+                {
+                    Roles.Add(FormsWeb.Shared.Roles.Developer.ToString());
+                }
+                else
+                {
+                    Roles.Remove(FormsWeb.Shared.Roles.Developer.ToString());
+                }
+            }
+        }
+
+        public bool IsInEditMode { get; set; }
+
+        public ApplicationUserUI(ApplicationUserShared baseObj)
+        {
+            EmailId = baseObj.EmailId;
+            Roles = baseObj.Roles;
+            _IsSuperAdmin = Roles.Contains(FormsWeb.Shared.Roles.SuperAdmin.ToString());
+            _IsAdmin = Roles.Contains(FormsWeb.Shared.Roles.Administrator.ToString());
+            _IsUser = Roles.Contains(FormsWeb.Shared.Roles.User.ToString());
+            _IsDeveloper = Roles.Contains(FormsWeb.Shared.Roles.Developer.ToString());
+        }
+    }
 
 }
