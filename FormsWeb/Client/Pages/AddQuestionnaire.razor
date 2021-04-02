@@ -1,0 +1,61 @@
+﻿@page "/addquestionnaire"
+
+@using Microsoft.AspNetCore.Authorization;
+@using FormsWeb.Shared;
+@inject HttpClient Http;
+@inject AuthenticationStateProvider AuthStateProvider;
+@inject NavigationManager NavManager;
+@attribute [Authorize(Roles = "Administrator")]
+
+<h3>AddQuestionnaire</h3>
+
+<EditForm Model="@QuestionnaireModel" OnValidSubmit="async editContext => await ValidFormSubmitted(editContext)">
+    <DataAnnotationsValidator />
+    <div class="form-group">
+        <label for="QuestionnaireTitle">Title</label>
+        <InputText @bind-Value=QuestionnaireModel.QuestionnaireTitle class="form-control"></InputText>
+        <ValidationMessage For="() => QuestionnaireModel.QuestionnaireTitle" />@*Learning: Action format is necessary to work*@
+    </div>
+
+    @foreach (var question in QuestionnaireModel.Questions)
+    {
+        <div id="QuestionEnclosingDiv" style="padding:20px;border:1px solid gray">
+            <div class="form-group">
+                <label for="Title">Question</label>
+                <InputTextArea @bind-Value="question.Title" class="form-control" />
+                <ValidationMessage For="() => question.Title" />
+            </div>
+            <input type="button" class="btn btn-info" @onclick="async args => RemoveQuestion(args, question)" value="Remove question" />
+            <br />
+        </div>
+        <br />
+    }
+
+    <input type="button" class="btn btn-info" @onclick="AddQuestion" value="Add Question" style="margin-right:50px" />
+    <input type="submit" class="btn btn-primary" value="Submit" />
+</EditForm>
+
+@code {
+    Questionnaire QuestionnaireModel = new Questionnaire() { Questions = new List<Question>() };
+
+    private void RemoveQuestion(MouseEventArgs args, Question question)
+    {
+        QuestionnaireModel.Questions.Remove(question);
+    }
+
+    private void AddQuestion(MouseEventArgs args)
+    {
+        QuestionnaireModel.Questions.Add(new Question() { QuestionnaireRef = new Questionnaire() { QuestionnaireTitle = "SomeTitleToPassValidation" } });
+    }
+
+    async Task ValidFormSubmitted(EditContext editContext)
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+
+        QuestionnaireModel.QuestionnaireOwnerEmailId = authState.User.Identity.Name;
+
+        await Http.PostAsJsonAsync<Questionnaire>("Questionnaires/AddQuestionnaire", QuestionnaireModel);
+
+        NavManager.NavigateTo("managequestionnaires");
+    }
+}

@@ -33,6 +33,9 @@ namespace FormsWeb.Server
                 options.UseSqlServer(
                     Configuration.GetConnectionString("AuthConnection")));
 
+            services.AddDbContext<QuestionnaireDbContext>(options =>
+                options.UseSqlServer(Configuration.GetConnectionString("QuestionnaireConnection")));
+
             services.AddDatabaseDeveloperPageExceptionFilter();
 
             services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)

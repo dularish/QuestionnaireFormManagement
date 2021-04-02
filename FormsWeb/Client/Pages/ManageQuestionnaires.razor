@@ -1,0 +1,63 @@
+﻿@page "/managequestionnaires"
+
+@using Microsoft.AspNetCore.Authorization;
+@using FormsWeb.Shared;
+
+@attribute [Authorize(Roles = "Administrator")]
+@inject HttpClient Http
+<h3>ManageQuestionnaires</h3>
+
+@if(questionnaires == null)
+{
+    <h3>Loading...</h3>
+}
+else
+{
+    <NavLink href="/addquestionnaire" class="btn btn-secondary">Add Questionnaire</NavLink><br /><br />
+    
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Owner</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var questionnaire in questionnaires)
+            {
+                <tr>
+                    <td>
+                        <a href="/managequestions/@questionnaire.Id" >@questionnaire.QuestionnaireTitle</a>
+                    </td>
+                    <td>
+                        @questionnaire.QuestionnaireOwnerEmailId
+                    </td>
+                    <td>
+                        <input type="button" value="Delete" class="btn btn-danger" @onclick="async args => await DeleteClicked(args, questionnaire)" />
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    
+}
+
+@code { 
+
+    private List<Questionnaire> questionnaires;
+
+    protected override async Task OnInitializedAsync()
+    {
+        questionnaires = (await Http.GetFromJsonAsync<Questionnaire[]>("Questionnaires")).ToList();
+
+        await base.OnInitializedAsync();
+    }
+
+    private async Task DeleteClicked(MouseEventArgs args, Questionnaire questionnaire)
+    {
+        await Http.PostAsJsonAsync<Questionnaire>("Questionnaires/DeleteQuestionnaire", questionnaire);
+        questionnaires.Remove(questionnaire);
+        await Task.CompletedTask;
+    }
+}

@@ -12,4 +12,13 @@ dotnet add package Microsoft.EntityFrameworkCore.Tools
 dotnet aspnet-codegenerator identity -dc MyApplication.Data.ApplicationDbContext --files "Account.Register;Account.Login;Account.Logout;Account.ForgotPassword;Account.RegisterConfirmation;Account.ConfirmEmail"
 
 
+To add a DbContext as a database :
+
+1. Create the class with correct DbContext inheritance, ctor
+
+2. run the command "dotnet ef migrations add <MigrationName> --context <DbContextClassName>"
+
+3. Then call the command "dotnet ef database update --context <DbContextClassName>"
+
+
 

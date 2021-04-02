@@ -1,0 +1,139 @@
+﻿@page "/managequestions/{questionnaireid}"
+
+@using FormsWeb.Shared;
+@inject HttpClient Http
+
+<h3>ManageQuestions</h3>
+<p>Questionnaire Id is @questionnaireid</p>
+
+@if (QuestionnaireModel == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+<EditForm Model="@QuestionnaireModel">
+    <DataAnnotationsValidator />@*Learning:Adding this only would enable validation which makes use of Required attribute for the properties bound*@
+    <div class="form-group">
+        <label for="QuestionnaireTitle">Title</label>
+        <InputText @bind-Value=QuestionnaireModel.QuestionnaireTitle class="form-control" disabled="@(!QuestionnaireModel.IsTitleInEditMode)"></InputText>
+        <ValidationMessage For="() => QuestionnaireModel.QuestionnaireTitle" />
+    </div>
+
+    <input type="button" class="btn btn-info" value="Edit Questionnaire Title" @onclick="EditQuestionnaireTitle" hidden="@(QuestionnaireModel.IsTitleInEditMode)" />
+    <input type="button" class="btn btn-info" value="Update Questionnaire Title" @onclick="async args => await UpdateQuestionnnaireTitle(args)" hidden="@(!QuestionnaireModel.IsTitleInEditMode)" />
+    <br /><br />
+
+    @foreach (var question in QuestionnaireModel.QuestionsViewModel)
+    {
+        <div id="QuestionEnclosingDiv" style="padding:20px;border:1px solid gray">
+            <div class="form-group">
+                <label for="Title">Question</label>
+                <InputTextArea @bind-Value="question.Title" class="form-control" disabled="@(!question.IsQuestionTitleInEditMode && !question.IsQuestionInAddMode)" />
+                <ValidationMessage For="() => question.Title" />
+            </div>
+            <input type="button" class="btn btn-info" @onclick="async args => await DeleteQuestion(args, question)" value="Delete question" />
+            <input type="button" class="btn btn-info" value="Edit Question" @onclick="async args => EditQuestionTitle(args, question)" hidden="@(question.IsQuestionTitleInEditMode || question.IsQuestionInAddMode)" />
+            <input type="button" class="btn btn-info" value="Update Question" @onclick="async args => await UpdateQuestionTitle(args, question)" hidden="@(!question.IsQuestionTitleInEditMode)" />
+            <input type="button" class="btn btn-info" @onclick="async args => await InsertQuestion(args, question)" value="Insert question to database" hidden="@(!question.IsQuestionInAddMode)" />
+            <br />
+        </div>
+        <br />
+    }
+
+    <input type="button" class="btn btn-info" @onclick="AddQuestion" value="Add Question" style="margin-right:50px" />
+</EditForm>
+}
+
+@code {
+    [Parameter]
+    public string questionnaireid { get; set; }
+
+    QuestionnaireViewModel QuestionnaireModel { get; set; }
+
+    protected async override Task OnParametersSetAsync()
+    {
+        var questionnaireFromAPI = await Http.GetFromJsonAsync<Questionnaire>($"Questionnaires/Questionnaire?id={questionnaireid.ToString()}");
+
+        QuestionnaireModel = new QuestionnaireViewModel(questionnaireFromAPI);
+
+        await base.OnParametersSetAsync();
+    }
+
+    protected async override Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+    }
+
+    private void EditQuestionnaireTitle(MouseEventArgs args)
+    {
+        QuestionnaireModel.IsTitleInEditMode = true;
+    }
+
+    private async Task UpdateQuestionnnaireTitle(MouseEventArgs args)
+    {
+        await Http.PostAsJsonAsync<Questionnaire>("Questionnaires/UpdateQuestionnaireTitle", QuestionnaireModel);
+        QuestionnaireModel.IsTitleInEditMode = false;
+    }
+
+    private void EditQuestionTitle(MouseEventArgs args, QuestionViewModel question)
+    {
+        question.IsQuestionTitleInEditMode = true;
+    }
+
+    private async Task UpdateQuestionTitle(MouseEventArgs args, QuestionViewModel question)
+    {
+        await Http.PostAsJsonAsync<Question>("Questionnaires/UpdateQuestionTitle", question);
+        question.IsQuestionTitleInEditMode = false;
+    }
+
+    private void AddQuestion(MouseEventArgs mouseEventArgs)
+    {
+        QuestionnaireModel.QuestionsViewModel.Add(new QuestionViewModel(new Question() { QuestionnaireRef = new Questionnaire() { QuestionnaireTitle = "SomeTitleToPassValidation" } }) { IsQuestionInAddMode = true });
+    }
+
+    private async Task DeleteQuestion(MouseEventArgs mouseEventArgs, QuestionViewModel question)
+    {
+        if (!question.IsQuestionInAddMode)
+        {
+            await Http.PostAsJsonAsync<Question>("Questionnaires/DeleteQuestion", question);
+        }
+        QuestionnaireModel.QuestionsViewModel.Remove(question);
+    }
+
+    private async Task InsertQuestion(MouseEventArgs mouseEventArgs, QuestionViewModel question)
+    {
+        question.QuestionnaireRef = QuestionnaireModel;
+        await Http.PostAsJsonAsync<Question>("Questionnaires/InsertQuestion", question);
+        question.IsQuestionInAddMode = false;
+    }
+
+    public class QuestionnaireViewModel : Questionnaire
+    {
+        public bool IsTitleInEditMode { get; set; }
+
+        public List<QuestionViewModel> QuestionsViewModel { get; set; }
+
+        public QuestionnaireViewModel(Questionnaire questionnaire)
+        {
+            Id = questionnaire.Id;
+            QuestionnaireOwnerEmailId = questionnaire.QuestionnaireOwnerEmailId;
+            QuestionnaireTitle = questionnaire.QuestionnaireTitle;
+            QuestionsViewModel = questionnaire.Questions.Select(s => new QuestionViewModel(s)).ToList();
+        }
+    }
+
+    public class QuestionViewModel : Question
+    {
+        public bool IsQuestionTitleInEditMode { get; set; }
+
+        public bool IsQuestionInAddMode { get; set; }
+
+        public QuestionViewModel(Question question)
+        {
+            Id = question.Id;
+            Title = question.Title;
+            QuestionnaireRef = new Questionnaire() { QuestionnaireTitle = "SomeTitleToPassValidation" };
+        }
+    }
+}
