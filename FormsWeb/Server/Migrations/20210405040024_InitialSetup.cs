@@ -27,14 +27,14 @@ namespace FormsWeb.Server.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Title = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    QuestionnaireRefId = table.Column<int>(type: "int", nullable: false)
+                    QuestionnaireId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Questions", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Questions_QuestionSets_QuestionnaireRefId",
-                        column: x => x.QuestionnaireRefId,
+                        name: "FK_Questions_QuestionSets_QuestionnaireId",
+                        column: x => x.QuestionnaireId,
                         principalTable: "QuestionSets",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -46,7 +46,7 @@ namespace FormsWeb.Server.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    QuestionnaireId = table.Column<int>(type: "int", nullable: true),
+                    QuestionnaireId = table.Column<int>(type: "int", nullable: false),
                     ResponseSetOwnerEmailId = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
@@ -57,7 +57,7 @@ namespace FormsWeb.Server.Migrations
                         column: x => x.QuestionnaireId,
                         principalTable: "QuestionSets",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -66,9 +66,9 @@ namespace FormsWeb.Server.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    QuestionId = table.Column<int>(type: "int", nullable: true),
-                    ResponseText = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    ResponseSetId = table.Column<int>(type: "int", nullable: true)
+                    QuestionId = table.Column<int>(type: "int", nullable: false),
+                    ResponseText = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    ResponseSetId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -84,13 +84,13 @@ namespace FormsWeb.Server.Migrations
                         column: x => x.ResponseSetId,
                         principalTable: "ResponseSets",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Questions_QuestionnaireRefId",
+                name: "IX_Questions_QuestionnaireId",
                 table: "Questions",
-                column: "QuestionnaireRefId");
+                column: "QuestionnaireId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Responses_QuestionId",

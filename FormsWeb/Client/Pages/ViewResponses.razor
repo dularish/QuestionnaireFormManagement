@@ -1,0 +1,55 @@
+﻿@page "/viewresponses"
+
+@using Microsoft.AspNetCore.Authorization;
+@using FormsWeb.Shared;
+
+@attribute [Authorize(Roles = "Administrator")]
+@inject HttpClient Http
+@inject NavigationManager NavManager
+<h3>View Responses</h3>
+
+@if (questionnaires == null)
+{
+    <h3>Loading...</h3>
+}
+else
+{
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Owner</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var questionnaire in questionnaires)
+            {
+                <tr>
+                    <td>
+                        @questionnaire.QuestionnaireTitle
+                    </td>
+                    <td>
+                        @questionnaire.QuestionnaireOwnerEmailId
+                    </td>
+                    <td>
+                        <a class="btn btn-info" href="/viewresponsesforquestionnaire/@questionnaire.Id">View Responses</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+}
+
+@code {
+    private List<Questionnaire> questionnaires;
+
+    protected override async Task OnInitializedAsync()
+    {
+        questionnaires = (await Http.GetFromJsonAsync<Questionnaire[]>("Questionnaires")).ToList();
+
+        await base.OnInitializedAsync();
+    }
+}

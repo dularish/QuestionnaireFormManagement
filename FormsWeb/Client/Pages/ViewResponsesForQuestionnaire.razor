@@ -1,0 +1,65 @@
+﻿@page "/viewresponsesforquestionnaire/{questionnaireid}"
+
+@using Microsoft.AspNetCore.Authorization;
+@using FormsWeb.Shared;
+@inject HttpClient Http
+@inject NavigationManager NavManager;
+
+@attribute [Authorize(Roles = "Administrator")]
+
+<h3>View Responses For Questionnaire</h3>
+
+@if (ResponseSets == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Submitted by</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var responseSet in ResponseSets)
+            {
+                <tr>
+                    <td>
+                        <a href="/viewresponsesforresponseset/@responseSet.Id">@responseSet.Questionnaire.QuestionnaireTitle</a>
+                    </td>
+                    <td>
+                        @responseSet.ResponseSetOwnerEmailId
+                    </td>
+                    <td>
+                        <input type="button" value="Delete" class="btn btn-danger" @onclick="async args => await DeleteClicked(args, responseSet)" />
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    
+}
+
+@code {
+    [Parameter]
+    public string questionnaireid { get; set; }
+
+    public List<ResponseSet> ResponseSets { get; set; }
+
+    protected async override Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+
+        ResponseSets = (await Http.GetFromJsonAsync<ResponseSet[]>($"Questionnaires/ResponseSets?questionnaireid={questionnaireid.ToString()}")).ToList();
+    }
+
+    private async Task DeleteClicked(MouseEventArgs args, ResponseSet responseSet)
+    {
+        await Http.PostAsJsonAsync<ResponseSet>("Questionnaires/DeleteResponseSet", responseSet);
+        ResponseSets.Remove(responseSet);
+    }
+}

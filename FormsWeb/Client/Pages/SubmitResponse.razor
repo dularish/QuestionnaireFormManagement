@@ -1,0 +1,65 @@
+﻿@page "/SubmitResponse/{questionnaireid}"
+
+@using Microsoft.AspNetCore.Authorization;
+@using FormsWeb.Shared;
+@inject HttpClient Http;
+@inject AuthenticationStateProvider AuthStateProvider;
+@inject NavigationManager NavManager;
+
+@attribute [Authorize(Roles = "User")]
+
+<h3>Submit Response</h3>
+
+@if (ResponseModel == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <EditForm Model="@ResponseModel">
+        <DataAnnotationsValidator />
+        <h3>@ResponseModel.Questionnaire.QuestionnaireTitle</h3>
+
+        @foreach (var response in ResponseModel.Responses)
+        {
+            <div id="QuestionEnclosingDiv" style="padding:20px;border:1px solid gray">
+                <div class="form-group">
+                    <label for="Title">@response.Question.Title</label>
+                    <InputTextArea @bind-Value="response.ResponseText" class="form-control" />
+                    <ValidationMessage For="() => response.ResponseText" />
+                </div>
+                <br />
+            </div>
+            <br />
+        }
+
+        <input type="submit" class="btn btn-primary" @onclick="async args => await SubmitResponseToServer(args)" value="Submit Response" style="margin-right:50px" />
+    </EditForm>
+}
+
+@code {
+    [Parameter]
+    public string questionnaireid { get; set; }
+
+    public ResponseSet ResponseModel { get; set; }
+
+    protected async override Task OnParametersSetAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+
+        var questionnaire = await Http.GetFromJsonAsync<Questionnaire>($"Questionnaires/Questionnaire?id={questionnaireid.ToString()}");
+
+        var responsesToSubmit = questionnaire.Questions.Select(s => new Response() { Question = s, QuestionId = s.Id }).ToList();
+
+        ResponseModel = new ResponseSet() { Questionnaire = questionnaire, QuestionnaireId = questionnaire.Id, ResponseSetOwnerEmailId = authState.User.Identity.Name, Responses = responsesToSubmit };
+
+        await base.OnParametersSetAsync();
+    }
+
+    private async Task SubmitResponseToServer(MouseEventArgs args)
+    {
+        await Http.PostAsJsonAsync<ResponseSet>("Questionnaires/SubmitResponse", ResponseModel);
+
+        NavManager.NavigateTo("/");
+    }
+}

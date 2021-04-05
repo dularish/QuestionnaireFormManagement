@@ -45,7 +45,7 @@
 
     private void AddQuestion(MouseEventArgs args)
     {
-        QuestionnaireModel.Questions.Add(new Question() { QuestionnaireRef = new Questionnaire() { QuestionnaireTitle = "SomeTitleToPassValidation" } });
+        QuestionnaireModel.Questions.Add(new Question() { Questionnaire = new Questionnaire() { QuestionnaireTitle = "SomeTitleToPassValidation" } });
     }
 
     async Task ValidFormSubmitted(EditContext editContext)

@@ -1,0 +1,40 @@
+﻿@page "/viewresponsesforresponseset/{responsesetid}"
+
+@using FormsWeb.Shared;
+
+@inject HttpClient Http;
+
+<h3>View Responses For ResponseSet</h3>
+
+@if (Responses == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    @foreach (var response in Responses)
+    {
+        <div id="QuestionEnclosingDiv" style="padding:20px;border:1px solid gray">
+            <div class="form-group">
+                <label for="Title">@response.Question.Title</label>
+                <label class="form-control" disabled="true" >@response.ResponseText</label>
+            </div>
+            <br />
+        </div>
+        <br />
+    }
+}
+
+@code {
+    [Parameter]
+    public string responsesetid { get; set; }
+
+    public List<Response> Responses { get; set; }
+
+    protected async override Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+
+        Responses = (await Http.GetFromJsonAsync<Response[]>($"Questionnaires/ResponsesForResponseSetId?responsesetid={responsesetid}")).ToList();
+    }
+}

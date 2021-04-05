@@ -3,8 +3,7 @@
 @using FormsWeb.Shared;
 @inject HttpClient Http
 
-<h3>ManageQuestions</h3>
-<p>Questionnaire Id is @questionnaireid</p>
+<h3>Manage Questions</h3>
 
 @if (QuestionnaireModel == null)
 {
@@ -89,7 +88,7 @@ else
 
     private void AddQuestion(MouseEventArgs mouseEventArgs)
     {
-        QuestionnaireModel.QuestionsViewModel.Add(new QuestionViewModel(new Question() { QuestionnaireRef = new Questionnaire() { QuestionnaireTitle = "SomeTitleToPassValidation" } }) { IsQuestionInAddMode = true });
+        QuestionnaireModel.QuestionsViewModel.Add(new QuestionViewModel(new Question() { /*Questionnaire = new Questionnaire() { QuestionnaireTitle = "SomeTitleToPassValidation" }*/ }) { IsQuestionInAddMode = true });
     }
 
     private async Task DeleteQuestion(MouseEventArgs mouseEventArgs, QuestionViewModel question)
@@ -103,7 +102,7 @@ else
 
     private async Task InsertQuestion(MouseEventArgs mouseEventArgs, QuestionViewModel question)
     {
-        question.QuestionnaireRef = QuestionnaireModel;
+        question.Questionnaire = QuestionnaireModel;
         await Http.PostAsJsonAsync<Question>("Questionnaires/InsertQuestion", question);
         question.IsQuestionInAddMode = false;
     }
@@ -133,7 +132,7 @@ else
         {
             Id = question.Id;
             Title = question.Title;
-            QuestionnaireRef = new Questionnaire() { QuestionnaireTitle = "SomeTitleToPassValidation" };
+            //Questionnaire = new Questionnaire() { QuestionnaireTitle = "SomeTitleToPassValidation" };
         }
     }
 }
