@@ -34,10 +34,19 @@ namespace FormsWeb.Server.Controllers
         public Questionnaire Questionnaire([FromQuery]int id)
         {
             var questionnaire = _QuestionnaireDbContext.QuestionSets
-                                .Include(nameof(FormsWeb.Shared.Questionnaire.Questions))//Learning: Only explicit include would fetch
+                                .Include(s => s.Questions)//Learning: Only explicit include would fetch
                                                                                          //the related table data
+                                .ThenInclude(s => s.MultipleChoiceSet).ThenInclude(s => s.MultipleChoices)
                                 .SingleOrDefault(s => s.Id == id);
             questionnaire.Questions.ForEach(s => s.Questionnaire = null);//Learning: Prevent circular referencing when giving out
+            questionnaire.Questions.ForEach(s =>
+            {
+                if(s.MultipleChoiceSet != null)
+                {
+                    s.MultipleChoiceSet.Question = null;
+                    s.MultipleChoiceSet.MultipleChoices.ForEach(y => y.MultipleChoiceSet = null);
+                }
+            });
             return questionnaire;
         }
 
@@ -55,9 +64,24 @@ namespace FormsWeb.Server.Controllers
         public List<Response> ResponsesForResponseSetId([FromQuery] int responsesetid)
         {
             List<Response> responses = _QuestionnaireDbContext.Responses
-                                .Include(nameof(FormsWeb.Shared.Response.Question))
+                                .Include(s => s.Question)
+                                .ThenInclude(s => s.MultipleChoiceSet).ThenInclude(s => s.MultipleChoices)
+                                .Include(s => s.MultipleChoicesSelected).ThenInclude(s => s.MultipleChoice)
                                 .Where(s => s.ResponseSetId == responsesetid).ToList();
-            responses.ForEach(s => s.Question.Responses = null);
+            responses.ForEach(s =>
+            {
+                s.Question.Responses = null;
+                if (s.Question.MultipleChoiceSet != null)
+                {
+                    s.Question.MultipleChoiceSet.Question = null;
+                    s.Question.MultipleChoiceSet.MultipleChoices.ForEach(y => y.MultipleChoiceSet = null);
+                }
+                s.MultipleChoicesSelected?.ForEach(y =>
+                {
+                    y.MultipleChoice.MultipleChoiceSet = null;
+                    y.Response = null;
+                });
+            });
             return responses;
         }
 
@@ -89,7 +113,8 @@ namespace FormsWeb.Server.Controllers
         public void DeleteResponseSet(ResponseSet responseSet)
         {
             var responseSetToDelete = _QuestionnaireDbContext.ResponseSets
-                                            .Include(nameof(FormsWeb.Shared.ResponseSet.Responses))
+                                            .Include(s => s.Responses)
+                                            .ThenInclude(s => s.MultipleChoicesSelected)
                                             .Single(s => s.Id == responseSet.Id);
 
             _QuestionnaireDbContext.ResponseSets.Remove(responseSetToDelete);
@@ -125,7 +150,8 @@ namespace FormsWeb.Server.Controllers
         private void DeleteQuestionWithoutCommit(Question question)
         {
             var questionToDelete = _QuestionnaireDbContext.Questions
-                                                .Include(nameof(FormsWeb.Shared.Question.Responses))
+                                                .Include(s => s.Responses)
+                                                .Include(s => s.MultipleChoiceSet).ThenInclude(s => s.MultipleChoices)
                                                 .Single(s => s.Id == question.Id);
             _QuestionnaireDbContext.Questions.Remove(questionToDelete);
         }
@@ -145,7 +171,21 @@ namespace FormsWeb.Server.Controllers
         {
             responseSet.Questionnaire = null;//Learning: When adding an object which has already existing referenced objects,
                                              //do not have any object reference, have just foreign key value
-            responseSet.Responses.ForEach(s => s.Question = null);
+
+            responseSet.Responses.ForEach(response =>
+            {
+                if(response.Question.ResponseTypeAllowed != ResponseTypeAllowed.Text)
+                {
+                    var choices = _QuestionnaireDbContext.MultipleChoiceSets.Include(s => s.MultipleChoices).Single(s => s.Id == response.Question.MultipleChoiceSet.Id).MultipleChoices;
+                    var filteredChoices = choices.Where(s => response.MultipleChoicesSelected.Any(y => y.MultipleChoiceId == s.Id)).ToList();
+                    var responseMultipleChoiceMap = filteredChoices.Select(s => new ResponseMultipleChoiceSelectionMap() { MultipleChoiceId = s.Id, Response = response }).ToList();
+                    response.MultipleChoicesSelected = responseMultipleChoiceMap;//Learning: When adding an object which has already existing one-to-many existing
+                                                                       //referenced objects, take those objects from DbContext again, so that EF understands
+                                                                       //that they are not objects to be created
+                }
+                
+                response.Question = null;
+            });
             
             _QuestionnaireDbContext.ResponseSets.Add(responseSet);
             _QuestionnaireDbContext.SaveChanges();

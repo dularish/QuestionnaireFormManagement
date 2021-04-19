@@ -25,6 +25,12 @@ namespace FormsWeb.Server.Data
                 .OnDelete(DeleteBehavior.ClientCascade);//Learning: For two cascade delete foreign key relationships to one table, 
                                                         //it is necessary to one of them as Client cascade so that the database could
                                                         //be setup
+
+            modelBuilder.Entity<Response>()
+                .HasMany(s => s.MultipleChoicesSelected)
+                .WithOne(y => y.Response)
+                .HasForeignKey(s => s.ResponseId)
+                .OnDelete(DeleteBehavior.ClientCascade);
         }
 
         public DbSet<Questionnaire> QuestionSets { get; set; }
@@ -32,6 +38,7 @@ namespace FormsWeb.Server.Data
 
         public DbSet<ResponseSet> ResponseSets { get; set; }
         public DbSet<Response> Responses { get; set; }
+        public DbSet<MultipleChoiceSet> MultipleChoiceSets { get; set; }
 
     }
     

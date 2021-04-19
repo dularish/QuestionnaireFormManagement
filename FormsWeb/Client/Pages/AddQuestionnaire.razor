@@ -2,6 +2,7 @@
 
 @using Microsoft.AspNetCore.Authorization;
 @using FormsWeb.Shared;
+@using System.ComponentModel.DataAnnotations;
 @inject HttpClient Http;
 @inject AuthenticationStateProvider AuthStateProvider;
 @inject NavigationManager NavManager;
@@ -9,25 +10,56 @@
 
 <h3>AddQuestionnaire</h3>
 
-<EditForm Model="@QuestionnaireModel" OnValidSubmit="async editContext => await ValidFormSubmitted(editContext)">
-    <DataAnnotationsValidator />
+<EditForm Model="@AddQuestionnaireModelObj" OnValidSubmit="async editContext => await ValidFormSubmitted(editContext)">
+    @*<DataAnnotationsValidator />*@
+    <ObjectGraphDataAnnotationsValidator />@*Learning: This type of AnnotationsValidator can be used to have validation for deep objects*@
+    <CustomValidator @ref="customValidator" />
+    <ValidationMessage For="() => AddQuestionnaireModelObj.QuestionnaireModel.Questions" />
     <div class="form-group">
         <label for="QuestionnaireTitle">Title</label>
-        <InputText @bind-Value=QuestionnaireModel.QuestionnaireTitle class="form-control"></InputText>
-        <ValidationMessage For="() => QuestionnaireModel.QuestionnaireTitle" />@*Learning: Action format is necessary to work*@
+        <InputText @bind-Value=AddQuestionnaireModelObj.QuestionnaireModel.QuestionnaireTitle class="form-control"></InputText>
+        <ValidationMessage For="() => AddQuestionnaireModelObj.QuestionnaireModel.QuestionnaireTitle" />@*Learning: Action format is necessary to work*@
     </div>
 
-    @foreach (var question in QuestionnaireModel.Questions)
+    @foreach (var question in AddQuestionnaireModelObj.QuestionnaireModel.Questions)
     {
-        <div id="QuestionEnclosingDiv" style="padding:20px;border:1px solid gray">
-            <div class="form-group">
-                <label for="Title">Question</label>
-                <InputTextArea @bind-Value="question.Title" class="form-control" />
-                <ValidationMessage For="() => question.Title" />
-            </div>
-            <input type="button" class="btn btn-info" @onclick="async args => RemoveQuestion(args, question)" value="Remove question" />
-            <br />
-        </div>
+<div id="QuestionEnclosingDiv" style="padding:20px;border:1px solid gray">
+    <div class="form-group">
+        <label for="Title">Question</label>
+        <InputTextArea @bind-Value="question.Title" class="form-control" />
+        <ValidationMessage For="() => question.Title" />
+    </div>
+
+    <div class="form-group">
+        <label for="Response type allowed">Response type allowed</label>
+        <InputSelect class="form-control" @bind-Value="question.ResponseTypeAllowed" @oninput="value => ResponseTypeChanged(value, question)">
+            @foreach (var responseType in Enum.GetValues<ResponseTypeAllowed>())
+                {
+                <option class="form-control" value="@responseType">@responseType</option>
+                }
+        </InputSelect>
+        <ValidationMessage For="() => question.ResponseTypeAllowed" />
+    </div>
+
+    @if (question.MultipleChoiceSet != null)
+    {
+        <InputText @bind-Value="@AddQuestionnaireModelObj.NewMultipleChoiceOption" />
+        <ValidationMessage For="() => AddQuestionnaireModelObj.NewMultipleChoiceOption" />
+        <input class="btn btn-info" type="button" value="Add option" @onclick="args => AddOption(args, question)" />
+        @foreach (var multipleChoice in question.MultipleChoiceSet.MultipleChoices)
+        {
+            <br /><br />
+            <InputText @bind-Value="multipleChoice.Title" disabled="disabled">@multipleChoice.Title</InputText>
+            <input class="btn btn-info" type="button" value="Remove option" @onclick="args => RemoveOption(args, question, multipleChoice)" />
+        }
+        <ValidationMessage For="() => question.MultipleChoiceSet.MultipleChoices" />
+    }
+
+    <br />
+    <br />
+    <input type="button" class="btn btn-info" @onclick="async args => RemoveQuestion(args, question)" value="Remove question" />
+    <br />
+</div>
         <br />
     }
 
@@ -36,26 +68,82 @@
 </EditForm>
 
 @code {
-    Questionnaire QuestionnaireModel = new Questionnaire() { Questions = new List<Question>() };
+
+    public class AddQuestionnaireModel
+    {
+        [ValidateComplexType]
+        public Questionnaire QuestionnaireModel { get; set; } = new Questionnaire() { Questions = new List<Question>() };
+
+        public string NewMultipleChoiceOption { get; set; }
+    }
+    AddQuestionnaireModel AddQuestionnaireModelObj;
+    EditContext ModelEditContext;
+    CustomValidator customValidator;
+
+    protected override void OnInitialized()
+    {
+        AddQuestionnaireModelObj = new AddQuestionnaireModel();
+        ModelEditContext = new EditContext(AddQuestionnaireModelObj);
+    }
+
+    private void ResponseTypeChanged(ChangeEventArgs args, Question question)
+    {
+        var newOption = Enum.Parse<ResponseTypeAllowed>(args.Value.ToString());
+
+        if(newOption == ResponseTypeAllowed.Checkbox || newOption == ResponseTypeAllowed.Radiobutton)
+        {
+            question.MultipleChoiceSet = new MultipleChoiceSet() { MultipleChoices = new List<MultipleChoice>() };
+        }
+        else
+        {
+            question.MultipleChoiceSet = null;
+        }
+
+    }
 
     private void RemoveQuestion(MouseEventArgs args, Question question)
     {
-        QuestionnaireModel.Questions.Remove(question);
+        AddQuestionnaireModelObj.QuestionnaireModel.Questions.Remove(question);
+    }
+
+    private void AddOption(MouseEventArgs args, Question question)
+    {
+        AddQuestionnaireModelObj.NewMultipleChoiceOption = AddQuestionnaireModelObj.NewMultipleChoiceOption.Trim();
+        if (AddQuestionnaireModelObj.NewMultipleChoiceOption.Length > 2 && !question.MultipleChoiceSet.MultipleChoices.Any(s => s.Title == AddQuestionnaireModelObj.NewMultipleChoiceOption))
+        {
+            question.MultipleChoiceSet.MultipleChoices.Add(new MultipleChoice() { Title = AddQuestionnaireModelObj.NewMultipleChoiceOption });
+            AddQuestionnaireModelObj.NewMultipleChoiceOption = string.Empty;
+        }
+        else
+        {
+            customValidator.AddError(nameof(AddQuestionnaireModel.NewMultipleChoiceOption), new List<string>() { "Multiple choice option name requirements not met" });
+        }
+    }
+
+    private void RemoveOption(MouseEventArgs args, Question question, MultipleChoice multipleChoice)
+    {
+        question.MultipleChoiceSet.MultipleChoices.Remove(multipleChoice);
     }
 
     private void AddQuestion(MouseEventArgs args)
     {
-        QuestionnaireModel.Questions.Add(new Question() { Questionnaire = new Questionnaire() { QuestionnaireTitle = "SomeTitleToPassValidation" } });
+        AddQuestionnaireModelObj.QuestionnaireModel.Questions.Add(new Question() { Questionnaire = new Questionnaire() { QuestionnaireTitle = "SomeTitleToPassValidation" }, MultipleChoiceSet = null /*MultipleChoiceSet = new MultipleChoiceSet() { MultipleChoices = new List<MultipleChoice>() }*/ });
     }
 
     async Task ValidFormSubmitted(EditContext editContext)
     {
+        bool isValid = editContext.Validate();
+
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
 
-        QuestionnaireModel.QuestionnaireOwnerEmailId = authState.User.Identity.Name;
+        AddQuestionnaireModelObj.QuestionnaireModel.QuestionnaireOwnerEmailId = authState.User.Identity.Name;
 
-        await Http.PostAsJsonAsync<Questionnaire>("Questionnaires/AddQuestionnaire", QuestionnaireModel);
+        var response = await Http.PostAsJsonAsync<Questionnaire>("Questionnaires/AddQuestionnaire", AddQuestionnaireModelObj.QuestionnaireModel);
 
-        NavManager.NavigateTo("managequestionnaires");
+        if(response.StatusCode == System.Net.HttpStatusCode.OK)
+        {
+            NavManager.NavigateTo("managequestionnaires");
+        }
+
     }
 }

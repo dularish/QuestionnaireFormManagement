@@ -16,25 +16,53 @@
 }
 else
 {
-    <EditForm Model="@ResponseModel">
-        <DataAnnotationsValidator />
-        <h3>@ResponseModel.Questionnaire.QuestionnaireTitle</h3>
+<EditForm Model="@ResponseModel" OnValidSubmit="async editContext => await ValidFormSubmitted(editContext)">
+    @*<DataAnnotationsValidator />*@
+    <ObjectGraphDataAnnotationsValidator />
+    <ValidationSummary />
+    <h3>@ResponseModel.Questionnaire.QuestionnaireTitle</h3>
 
-        @foreach (var response in ResponseModel.Responses)
-        {
-            <div id="QuestionEnclosingDiv" style="padding:20px;border:1px solid gray">
-                <div class="form-group">
-                    <label for="Title">@response.Question.Title</label>
-                    <InputTextArea @bind-Value="response.ResponseText" class="form-control" />
-                    <ValidationMessage For="() => response.ResponseText" />
-                </div>
-                <br />
-            </div>
+    @foreach (var response in ResponseModel.Responses)
+    {
+        <div id="QuestionEnclosingDiv" style="padding:20px;border:1px solid gray">
+            @*<div class="form-group">*@
+            <label for="Title">@response.Question.Title</label>
+            @if (response.Question.ResponseTypeAllowed == ResponseTypeAllowed.Text)
+            {
+                <InputTextArea @bind-Value="response.ResponseText" class="form-control" />
+                <ValidationMessage For="() => response.ResponseText" />
+            }
+            else
+            {
+                @foreach (var choice in response.Question.MultipleChoiceSet.MultipleChoices)
+                {
+                    @if (response.Question.ResponseTypeAllowed == ResponseTypeAllowed.Checkbox)
+                    {
+                        <br />
+                        <div class="form-control">
+                            <input id="@choice.Title" name="@choice.Title" type="checkbox" @onchange="args => OnCheckboxChange(args, response, choice)" />
+                            <label for="@choice.Title">@choice.Title</label>
+                        </div>
+                    }
+                    else
+                    {
+                        <br />
+                        <div class="form-control">
+                            <input id="@choice.Id" name="@response.Question.Id" type="radio" @onchange="args => OnRadiobuttonChange(args, response, choice)" />
+                            <label for="@choice.Id">@choice.Title</label>
+                        </div>
+                    }
+                }
+                <ValidationMessage For="() => response.MultipleChoicesSelected" />
+            }
+            @*</div>*@
             <br />
-        }
+        </div>
+        <br />
+    }
 
-        <input type="submit" class="btn btn-primary" @onclick="async args => await SubmitResponseToServer(args)" value="Submit Response" style="margin-right:50px" />
-    </EditForm>
+    <input type="submit" class="btn btn-primary" value="Submit Response" style="margin-right:50px" />
+</EditForm>
 }
 
 @code {
@@ -43,23 +71,43 @@ else
 
     public ResponseSet ResponseModel { get; set; }
 
+    private void OnCheckboxChange(ChangeEventArgs args, Response response, MultipleChoice multipleChoice)
+    {
+        if((bool)args.Value)
+        {
+            response.MultipleChoicesSelected.Add(new ResponseMultipleChoiceSelectionMap() { /*Response = response,*/ MultipleChoiceId = multipleChoice.Id });
+        }
+        else
+        {
+            var optionToRemove = response.MultipleChoicesSelected.Single(s => s.MultipleChoiceId == multipleChoice.Id);
+            response.MultipleChoicesSelected.Remove(optionToRemove);
+        }
+    }
+
+    private void OnRadiobuttonChange(ChangeEventArgs args, Response response, MultipleChoice multipleChoice)
+    {
+        response.MultipleChoicesSelected.Clear();
+        response.MultipleChoicesSelected.Add(new ResponseMultipleChoiceSelectionMap() { /*Response = response,*/ MultipleChoiceId = multipleChoice.Id });
+    }
+
     protected async override Task OnParametersSetAsync()
     {
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
 
         var questionnaire = await Http.GetFromJsonAsync<Questionnaire>($"Questionnaires/Questionnaire?id={questionnaireid.ToString()}");
 
-        var responsesToSubmit = questionnaire.Questions.Select(s => new Response() { Question = s, QuestionId = s.Id }).ToList();
+        var responsesToSubmit = questionnaire.Questions.Select(s => new Response() { Question = s, QuestionId = s.Id, MultipleChoicesSelected = s.ResponseTypeAllowed == ResponseTypeAllowed.Text ? null : new List<ResponseMultipleChoiceSelectionMap>() }).ToList();
 
         ResponseModel = new ResponseSet() { Questionnaire = questionnaire, QuestionnaireId = questionnaire.Id, ResponseSetOwnerEmailId = authState.User.Identity.Name, Responses = responsesToSubmit };
 
         await base.OnParametersSetAsync();
     }
 
-    private async Task SubmitResponseToServer(MouseEventArgs args)
+    async Task ValidFormSubmitted(EditContext editContext)
     {
         await Http.PostAsJsonAsync<ResponseSet>("Questionnaires/SubmitResponse", ResponseModel);
 
         NavManager.NavigateTo("/");
+
     }
 }

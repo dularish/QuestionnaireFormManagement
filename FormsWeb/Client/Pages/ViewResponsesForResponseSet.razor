@@ -17,9 +17,46 @@ else
         <div id="QuestionEnclosingDiv" style="padding:20px;border:1px solid gray">
             <div class="form-group">
                 <label for="Title">@response.Question.Title</label>
-                <label class="form-control" disabled="true" >@response.ResponseText</label>
+                @if (response.Question.ResponseTypeAllowed == ResponseTypeAllowed.Text)
+                {
+                    <label class="form-control" disabled="true">@response.ResponseText</label>
+                }
+                else
+                {
+                    @foreach (var choiceInQuestion in response.Question.MultipleChoiceSet.MultipleChoices)
+                    {
+                        <div class="form-control">
+                            @if (response.MultipleChoicesSelected.Any(s => s.MultipleChoiceId == choiceInQuestion.Id))
+                            {
+                                @if (response.Question.ResponseTypeAllowed == ResponseTypeAllowed.Checkbox)
+                                {
+                                    <input type="checkbox" checked name="@choiceInQuestion.Id" disabled />
+                                }
+                                else
+                                {
+                                    <input type="radio" checked name="@choiceInQuestion.Id" disabled />
+                                }
+
+                                <label for="@choiceInQuestion.Id">@choiceInQuestion.Title</label>
+                            }
+                            else
+                            {
+                                @if (response.Question.ResponseTypeAllowed == ResponseTypeAllowed.Checkbox)
+                                {
+                                    <input type="checkbox" name="@choiceInQuestion.Id" disabled />
+                                }
+                                else
+                                {
+                                    <input type="radio" name="@choiceInQuestion.Id" disabled />
+                                }
+                                <label for="@choiceInQuestion.Id">@choiceInQuestion.Title</label>
+                            }
+                        </div>
+                        <br />
+                    }
+                }
             </div>
-            <br />
+                        <br />
         </div>
         <br />
     }
