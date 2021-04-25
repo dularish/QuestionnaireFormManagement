@@ -38,7 +38,9 @@ namespace FormsWeb.Server.Controllers
                                                                                          //the related table data
                                 .ThenInclude(s => s.MultipleChoiceSet).ThenInclude(s => s.MultipleChoices)
                                 .SingleOrDefault(s => s.Id == id);
-            questionnaire.Questions.ForEach(s => s.Questionnaire = null);//Learning: Prevent circular referencing when giving out
+            questionnaire.Questions.ForEach(s => s.Questionnaire = null);//Learning: Prevent circular referencing when giving out ;
+                                                                         //The more maintainable alternative is to not expose entity framework
+                                                                         //related objects directly via WebAPI, but to expose only ViewModels
             questionnaire.Questions.ForEach(s =>
             {
                 if(s.MultipleChoiceSet != null)

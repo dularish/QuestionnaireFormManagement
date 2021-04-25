@@ -1,7 +1,13 @@
 ﻿@page "/"
 
-<h1>Hello, world!</h1>
+<AuthorizeView>
+    <Authorized>
+        <h1>Hello @context.User.Identity.Name !</h1>
+        <p>Please select the desired module to continue.</p>
 
-Welcome to your new app.
-
-<SurveyPrompt Title="How is Blazor working for you?" />
+    </Authorized>
+    <NotAuthorized>
+        <h1>Welcome to Questionnaire Forms Management System</h1>
+        <p>Please login to continue using relevant modules for you.</p>
+    </NotAuthorized>
+</AuthorizeView>
