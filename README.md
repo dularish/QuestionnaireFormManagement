@@ -20,5 +20,10 @@ Explored a simple form management problem with the following technology stack
         "EmailSenderPassword": <YourEmailSenderAddressPassword>
       }
       ```
-      
-3. Run the "FormsWeb.Server" project
+3. Update the FormsWeb.Server project appSettings.json for the connectionstring properties "AuthConnection", "QuestionnaireConnection"
+4. Run the following commonds in the powershell/cmd :
+      ```powershell
+      dotnet ef database update --context "AuthDbContext"
+      dotnet ef database update --context "QuestionnaireDbContext"
+      ```
+5. Run the "FormsWeb.Server" project
