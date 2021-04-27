@@ -20,6 +20,8 @@ Explored a simple form management problem with the following technology stack
         "EmailSenderPassword": <YourEmailSenderAddressPassword>
       }
       ```
+      The SuperAdmin Account Email is fixed as "admin@gmail.com".
+      
 3. Update the FormsWeb.Server project appSettings.json for the connectionstring properties "AuthConnection", "QuestionnaireConnection"
 4. Run the following commonds in the powershell/cmd :
       ```powershell
