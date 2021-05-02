@@ -8,6 +8,8 @@ Explored a simple form management problem with the following technology stack
 4. ASP.NET core identity for authentication management
 5. MS-SQL database
 
+## Demo
+  ![Demo Gif](DemoGifs/BlazorQuestionnaireAppDemo1_1in8_ReducedImageSize.gif)
 
 ## Setup Instructions :
 
